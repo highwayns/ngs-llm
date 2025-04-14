@@ -85,23 +85,24 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
     # 模型能力映射表与自动适配工具函数（重构合并部分）
     MODEL_CAPABILITIES = {
         "openai4o": {"chat": True, "completion": False, "stream": True, "tool_call": True, "function_call": True, "json_schema": True, "system_prompt": True, "image": True, "tokenizer": "cl100k_base"},
-        "openai4-turbo": {"chat": True, "completion": False, "stream": True, "tool_call": True, "function_call": True, "json_schema": True, "system_prompt": True, "image": True, "tokenizer": "cl100k_base"},
-        "openaio1": {"chat": True, "completion": False, "stream": False, "tool_call": True, "function_call": True, "json_schema": False, "system_prompt": False, "image": False, "tokenizer": "cl100k_base"},
+        "openai4-turbo": {"chat": True, "completion": False, "stream": True, "tool_call": True, "function_call": True, "json_schema": True, "system_prompt": True, "image": False, "tokenizer": "cl100k_base"},
+        "openaio1": {"chat": True, "completion": False, "stream": False, "tool_call": True, "function_call": True, "json_schema": False, "system_prompt": False, "image": True, "tokenizer": "cl100k_base"},
         "openaio1-mini": {"chat": True, "completion": False, "stream": False, "tool_call": False, "function_call": True, "json_schema": False, "system_prompt": False, "image": False, "tokenizer": "cl100k_base"},
-        "nec-llm": {"chat": True, "completion": True, "stream": False, "tool_call": False, "function_call": False, "json_schema": False, "system_prompt": True, "image": False, "tokenizer": "auto"},
-        "cotomi-pro": {"chat": True, "completion": False, "stream": False, "tool_call": False, "function_call": False, "json_schema": False, "system_prompt": True, "image": False, "tokenizer": "auto"},
-        "claude-v3haiku": {"chat": True, "completion": False, "stream": True, "tool_call": True, "function_call": True, "json_schema": False, "system_prompt": True, "image": True, "tokenizer": "claude"},
-        "claude-v3.5sonnet": {"chat": True, "completion": False, "stream": True, "tool_call": True, "function_call": True, "json_schema": True, "system_prompt": True, "image": True, "tokenizer": "claude"},
-        "gemini-1.5-pro": {"chat": True, "completion": False, "stream": True, "tool_call": True, "function_call": True, "json_schema": True, "system_prompt": True, "image": True, "tokenizer": "gemini"},
-        "gemini-2.0-flash": {"chat": True, "completion": False, "stream": True, "tool_call": False, "function_call": False, "json_schema": True, "system_prompt": True, "image": True, "tokenizer": "gemini"},
+        "nec-llm": {"chat": True, "completion": True, "stream": True, "tool_call": False, "function_call": False, "json_schema": False, "system_prompt": True, "image": False, "tokenizer": "cl100k_base"},
+        "cotomi-pro": {"chat": True, "completion": False, "stream": True, "tool_call": False, "function_call": False, "json_schema": False, "system_prompt": True, "image": False, "tokenizer": "cl100k_base"},
+        "claude-v3haiku": {"chat": True, "completion": False, "stream": False, "tool_call": True, "function_call": True, "json_schema": False, "system_prompt": True, "image": False, "tokenizer": "cl100k_base"},
+        "claude-v3.5sonnet": {"chat": True, "completion": False, "stream": False, "tool_call": True, "function_call": True, "json_schema": True, "system_prompt": True, "image": False, "tokenizer": "cl100k_base"},
+        "gemini-1.5-pro": {"chat": True, "completion": False, "stream": True, "tool_call": True, "function_call": True, "json_schema": True, "system_prompt": True, "image": True, "tokenizer": "cl100k_base"},
+        "gemini-2.0-flash": {"chat": True, "completion": False, "stream": True, "tool_call": False, "function_call": False, "json_schema": True, "system_prompt": True, "image": True, "tokenizer": "cl100k_base"},
     }
 
-    def get_model_capability(model_name: str, capability: str) -> bool:
-        return MODEL_CAPABILITIES.get(model_name, {}).get(capability, False)
+    def get_model_capability(self,model_name: str, capability: str) -> bool:
+        return self.MODEL_CAPABILITIES.get(model_name, {}).get(capability, False)
 
-    def clean_parameters_for_model(model_name: str, parameters: dict) -> dict:
-        capabilities = MODEL_CAPABILITIES.get(model_name, {})
+    def clean_parameters_for_model(self,model_name: str, parameters: dict) -> dict:
+        capabilities = self.MODEL_CAPABILITIES.get(model_name, {})
         cleaned = parameters.copy()
+        cleaned.pop("stream", None)
         if not capabilities.get("stream"):
             cleaned["stream"] = False
         if not capabilities.get("json_schema"):
@@ -112,8 +113,8 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
             cleaned.pop("tools", None)
         return cleaned
 
-    def get_tokenizer_name(model_name: str) -> str:
-        return MODEL_CAPABILITIES.get(model_name, {}).get("tokenizer", "cl100k_base")
+    def get_tokenizer_name(self,model_name: str) -> str:
+        return self.MODEL_CAPABILITIES.get(model_name, {}).get("tokenizer", "cl100k_base")
 
     # ✅ 请在 _chat_generate 方法内调用：
     # model_parameters = clean_parameters_for_model(base_model_name, model_parameters)
@@ -328,6 +329,7 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         base_model_name = self._get_base_model_name(credentials)
         client = AzureOpenAI(**self._to_credential_kwargs(credentials))
         model_parameters = self.clean_parameters_for_model(base_model_name, model_parameters)
+        model_parameters.pop("stream", None)  # ✅ 删除stream避免重复
         '''response_format = model_parameters.get("response_format")
         if response_format:
             if response_format == "json_schema":
