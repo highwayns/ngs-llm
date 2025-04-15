@@ -102,9 +102,6 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
     def clean_parameters_for_model(self,model_name: str, parameters: dict) -> dict:
         capabilities = self.MODEL_CAPABILITIES.get(model_name, {})
         cleaned = parameters.copy()
-        cleaned.pop("stream", None)
-        if not capabilities.get("stream"):
-            cleaned["stream"] = False
         if not capabilities.get("json_schema"):
             cleaned.pop("json_schema", None)
             if cleaned.get("response_format") == "json_schema":
@@ -328,10 +325,11 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
     ) -> Union[LLMResult, Generator]:
         base_model_name = self._get_base_model_name(credentials)
         client = AzureOpenAI(**self._to_credential_kwargs(credentials))
-        model_parameters = self.clean_parameters_for_model(base_model_name, model_parameters)
-        model_parameters.pop("stream", None)  # ✅ 删除stream避免重复
-        '''response_format = model_parameters.get("response_format")
-        if response_format:
+        #model_parameters = self.clean_parameters_for_model(base_model_name, model_parameters)
+        #model_parameters.pop("stream", None)  # ✅ 删除stream避免重复
+        capabilities = self.MODEL_CAPABILITIES.get(base_model_name, {})
+        response_format = model_parameters.get("response_format")
+        if response_format and capabilities.get("json_schema"):
             if response_format == "json_schema":
                 json_schema = model_parameters.get("json_schema")
                 if not json_schema:
@@ -351,9 +349,9 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
                 model_parameters["response_format"] = {"type": response_format}
         elif "json_schema" in model_parameters:
             del model_parameters["json_schema"]
-        '''
+        
         extra_model_kwargs = {}
-        if tools:
+        if tools and capabilities.get("tool_call"):
             extra_model_kwargs["tools"] = [
                 PromptMessageFunction(function=tool).model_dump(mode="json")
                 for tool in tools
@@ -735,10 +733,10 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         ):
             tokens_per_message = 3
             tokens_per_name = 1
-        else:
-            raise NotImplementedError(
-                f"get_num_tokens_from_messages() is not presently implemented for model {model}.See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."
-            )
+        #else:
+        #    raise NotImplementedError(
+        #        f"get_num_tokens_from_messages() is not presently implemented for model {model}.See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."
+        #    )
         num_tokens = 0
         messages_dict = [self._convert_prompt_message_to_dict(m) for m in messages]
         for message in messages_dict:
