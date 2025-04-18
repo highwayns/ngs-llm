@@ -1,5 +1,4 @@
 # Databricks notebook source
-# Databricks notebook source
 import copy
 import json
 import logging
@@ -326,8 +325,12 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         base_model_name = self._get_base_model_name(credentials)
         client = AzureOpenAI(**self._to_credential_kwargs(credentials))
         #model_parameters = self.clean_parameters_for_model(base_model_name, model_parameters)
-        #model_parameters.pop("stream", None)  # ✅ 删除stream避免重复
         capabilities = self.MODEL_CAPABILITIES.get(base_model_name, {})
+        if  not base_model_name.startswith(("o1")):
+            model_parameters.pop("stream", None)  # ✅ 删除stream避免重复
+        if not capabilities.get("system_prompt"):
+            if "system_prompt" in model_parameters:
+                del model_parameters["system_prompt"]
         response_format = model_parameters.get("response_format")
         if response_format and capabilities.get("json_schema"):
             if response_format == "json_schema":
@@ -714,6 +717,8 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         Official documentation: https://github.com/openai/openai-cookbook/blob/
         main/examples/How_to_format_inputs_to_ChatGPT_models.ipynb"""
         model = credentials["base_model_name"]
+        tokens_per_message = 3  
+        tokens_per_name = 1  
         if model.startswith(("o1", "o3", "gpt-4.5")):
             model = "gpt-4o"
         try:
