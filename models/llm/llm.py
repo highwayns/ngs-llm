@@ -98,15 +98,38 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
     def get_model_capability(self,model_name: str, capability: str) -> bool:
         return self.MODEL_CAPABILITIES.get(model_name, {}).get(capability, False)
 
-    def clean_parameters_for_model(self,model_name: str, parameters: dict) -> dict:
+    def clean_parameters_for_model(self, model_name: str, parameters: dict) -> dict:
+        """
+        根据 MODEL_CAPABILITIES 中定义的能力，清理掉不被支持的参数。
+        """
         capabilities = self.MODEL_CAPABILITIES.get(model_name, {})
         cleaned = parameters.copy()
+
+        # 流式支持
+        #if not capabilities.get("stream"):
+        cleaned.pop("stream", None)
+        cleaned.pop("stream_options", None)
+
+        # 系统提示支持
+        if not capabilities.get("system_prompt"):
+            cleaned.pop("system_prompt", None)
+
+        # JSON Schema / 结构化输出支持
         if not capabilities.get("json_schema"):
             cleaned.pop("json_schema", None)
+            # 如果用户指定了 json_schema 格式，则一并移除 response_format
             if cleaned.get("response_format") == "json_schema":
                 cleaned.pop("response_format", None)
+
+        # 工具调用支持
         if not capabilities.get("tool_call"):
             cleaned.pop("tools", None)
+
+        # 函数调用支持（老参数名或新参数名都一并清理）
+        if not capabilities.get("function_call"):
+            cleaned.pop("functions", None)
+            cleaned.pop("tool_choice", None)
+
         return cleaned
 
     def get_tokenizer_name(self,model_name: str) -> str:
@@ -158,7 +181,7 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
             )
         try:
             client = AzureOpenAI(**self._to_credential_kwargs(credentials))
-            if base_model_name.startswith(("o1", "o3")):
+            if base_model_name.startswith(("openaio1", "claude")):
                 client.chat.completions.create(
                     messages=[{"role": "user", "content": "ping"}],
                     model=model,
@@ -324,37 +347,11 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
     ) -> Union[LLMResult, Generator]:
         base_model_name = self._get_base_model_name(credentials)
         client = AzureOpenAI(**self._to_credential_kwargs(credentials))
-        #model_parameters = self.clean_parameters_for_model(base_model_name, model_parameters)
-        capabilities = self.MODEL_CAPABILITIES.get(base_model_name, {})
-        if  not base_model_name.startswith(("o1")):
-            model_parameters.pop("stream", None)  # ✅ 删除stream避免重复
-        if not capabilities.get("system_prompt"):
-            if "system_prompt" in model_parameters:
-                del model_parameters["system_prompt"]
-        response_format = model_parameters.get("response_format")
-        if response_format and capabilities.get("json_schema"):
-            if response_format == "json_schema":
-                json_schema = model_parameters.get("json_schema")
-                if not json_schema:
-                    raise ValueError(
-                        "Must define JSON Schema when the response format is json_schema"
-                    )
-                try:
-                    schema = json.loads(json_schema)
-                except Exception:
-                    raise ValueError(f"not correct json_schema format: {json_schema}")
-                model_parameters.pop("json_schema")
-                model_parameters["response_format"] = {
-                    "type": "json_schema",
-                    "json_schema": schema,
-                }
-            else:
-                model_parameters["response_format"] = {"type": response_format}
-        elif "json_schema" in model_parameters:
-            del model_parameters["json_schema"]
-        
+        # 1）先从 model_parameters 清洗出安全、核心参数
+        model_kwargs = self.clean_parameters_for_model(base_model_name, model_parameters)
+        # 2)创建extra_model_kwargs
         extra_model_kwargs = {}
-        if tools and capabilities.get("tool_call"):
+        if tools:
             extra_model_kwargs["tools"] = [
                 PromptMessageFunction(function=tool).model_dump(mode="json")
                 for tool in tools
@@ -363,12 +360,27 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
             extra_model_kwargs["stop"] = stop
         if user:
             extra_model_kwargs["user"] = user
-        prompt_messages = self._clear_illegal_prompt_messages(base_model_name, prompt_messages)
+        # 3)支持 “预测输出”（Predicted Outputs）
+        if base_model_name.startswith(("openai4o")):
+            extra_model_kwargs["prediction"] = model_parameters.pop("prediction")
+        # 4)增强对结构化输出（Structured Outputs）及 JSON 模式的支持
+        #if model_parameters["response_format"] == "json_object":
+        #    extra_model_kwargs["response_format"] = {"type": "json_object"}
+        # 5)支持可复现输出（Reproducible Output）
+        #if "seed" in model_parameters and capabilities.get("reproducible_output"):
+        #    extra_model_kwargs["seed"] = model_parameters["seed"]
+        # 6#引入推理模型（O‑series）的 reasoning_effort 与 reasoning.summary
+        #if "reasoning_effort" in model_parameters:
+        #    extra_model_kwargs["reasoning_effort"] = model_parameters.pop("reasoning_effort")
+        #if "reasoning_summary" in model_parameters:
+        #    extra_model_kwargs.setdefault("reasoning", {})["summary"] = model_parameters.pop("reasoning_summary")
+
+        # 7）再从 extra_model_kwargs 中清洗出不合法的参数
         block_as_stream = False
-        if base_model_name.startswith(("o1", "o3", "claude")):
+        if base_model_name.startswith(("openaio1", "claude")):
             # o1 and o1-* do not support streaming
             # https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/reasoning#api--feature-support
-            if base_model_name.startswith("o1", "claude"):
+            if base_model_name.startswith("openaio1", "claude"):
                 if stream:
                     block_as_stream = True
                     stream = False
@@ -376,12 +388,14 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
                         del extra_model_kwargs["stream_options"]
             if "stop" in extra_model_kwargs:
                 del extra_model_kwargs["stop"]
-                
+
+        # 8)清理掉不合法的 prompt_messages    
+        prompt_messages = self._clear_illegal_prompt_messages(model, prompt_messages)            
         response = client.chat.completions.create(
             messages=[self._convert_prompt_message_to_dict(m) for m in prompt_messages],
             model=model,
             stream=stream,
-            **model_parameters,
+            **model_kwargs,
             **extra_model_kwargs,
         )
         if stream:
@@ -444,7 +458,7 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         :param prompt_messages: prompt messages
         :return: cleaned prompt messages
         """
-        checklist = ["gpt-4-turbo", "gpt-4-turbo-2024-04-09"]
+        checklist = ["openaio1", "openai4o", "gemini-1.5-pro", "gemini-2.0-flash"]
         if model in checklist:
             user_message_count = len(
                 [m for m in prompt_messages if isinstance(m, UserPromptMessage)]
@@ -463,7 +477,7 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
                                     for item in prompt_message.content
                                 ]
                             )
-        if model.startswith(("o1", "o3")):
+        if model.startswith(("openaio1")):
             system_message_count = len(
                 [m for m in prompt_messages if isinstance(m, SystemPromptMessage)]
             )
@@ -719,8 +733,6 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         model = credentials["base_model_name"]
         tokens_per_message = 3  
         tokens_per_name = 1  
-        if model.startswith(("o1", "o3", "gpt-4.5")):
-            model = "gpt-4o"
         try:
             #encoding = tiktoken.encoding_for_model(model)
             encoding = tiktoken.get_encoding(self.get_tokenizer_name(model))
@@ -728,20 +740,6 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
             logger.warning("Warning: model not found. Using cl100k_base encoding.")
             model = "cl100k_base"
             encoding = tiktoken.get_encoding(model)
-        if model.startswith("gpt-35-turbo-0301"):
-            tokens_per_message = 4
-            tokens_per_name = -1
-        elif (
-            model.startswith("gpt-35-turbo")
-            or model.startswith("gpt-4")
-            or model.startswith(("o1", "o3"))
-        ):
-            tokens_per_message = 3
-            tokens_per_name = 1
-        #else:
-        #    raise NotImplementedError(
-        #        f"get_num_tokens_from_messages() is not presently implemented for model {model}.See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."
-        #    )
         num_tokens = 0
         messages_dict = [self._convert_prompt_message_to_dict(m) for m in messages]
         for message in messages_dict:
