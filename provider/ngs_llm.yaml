@@ -99,172 +99,59 @@ model_credential_schema:
         zh_Hans: 基础模型
       options:
         - label:
-            en_US: gpt-35-turbo
+            en_US: openaio1-mini
           show_on:
             - value: llm
               variable: __model_type
-          value: gpt-35-turbo
+          value: openaio1-mini
         - label:
-            en_US: gpt-35-turbo-0125
+            en_US: openaio1
           show_on:
             - value: llm
               variable: __model_type
-          value: gpt-35-turbo-0125
+          value: openaio1
         - label:
-            en_US: gpt-35-turbo-16k
+            en_US: openai4o
           show_on:
             - value: llm
               variable: __model_type
-          value: gpt-35-turbo-16k
+          value: openai4o
         - label:
-            en_US: gpt-4
+            en_US: openai4-turbo
           show_on:
             - value: llm
               variable: __model_type
-          value: gpt-4
-        - label:
-            en_US: gpt-4-32k
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4-32k
-        - label:
-            en_US: gpt-4.5-preview
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4.5-preview
-        - label:
-            en_US: o3-mini
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: o3-mini
-        - label:
-            en_US: o1-mini
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: o1-mini
-        - label:
-            en_US: o1-preview
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: o1-preview
-        - label:
-            en_US: o1
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: o1
-        - label:
-            en_US: gpt-4o-mini
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4o-mini
-        - label:
-            en_US: gpt-4o-mini-2024-07-18
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4o-mini-2024-07-18
-        - label:
-            en_US: gpt-4o
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4o
-        - label:
-            en_US: gpt-4o-2024-05-13
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4o-2024-05-13
-        - label:
-            en_US: gpt-4o-2024-08-06
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4o-2024-08-06
-        - label:
-            en_US: gpt-4-turbo
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4-turbo
-        - label:
-            en_US: gpt-4-turbo-2024-04-09
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4-turbo-2024-04-09
-        - label:
-            en_US: gpt-4o-2024-11-20
-          value: gpt-4o-2024-11-20
-          show_on:
-            - variable: __model_type
-              value: llm
-        - label:
-            en_US: gpt-4-0125-preview
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4-0125-preview
-        - label:
-            en_US: gpt-4-1106-preview
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4-1106-preview
-        - label:
-            en_US: gpt-4-vision-preview
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-4-vision-preview
-        - label:
-            en_US: gpt-35-turbo-instruct
-          show_on:
-            - value: llm
-              variable: __model_type
-          value: gpt-35-turbo-instruct
+          value: openai4-turbo
         - label:
             en_US: Gemini 1.5 Pro
           show_on:
             - value: llm
               variable: __model_type
           value: gemini-1.5-pro
-
         - label:
             en_US: Nec llm
           show_on:
             - value: llm
               variable: __model_type
           value: nec-llm
-
         - label:
             en_US: Cotomi pro
           show_on:
             - value: llm
               variable: __model_type
           value: cotomi-pro
-
         - label:
             en_US: Claude v3Haiku
           show_on:
             - value: llm
               variable: __model_type
           value: claude-v3haiku
-
         - label:
             en_US: Claude v3.5Sonnet
           show_on:
             - value: llm
               variable: __model_type
           value: claude-v3.5sonnet
-        
         - label:
             en_US: Gemini 2.0 Flash
           show_on:
