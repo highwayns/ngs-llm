@@ -1,3 +1,4 @@
+# Databricks notebook source
 from pydantic import BaseModel
 
 from dify_plugin.entities.model.llm import LLMMode
@@ -1003,7 +1004,7 @@ LLM_BASE_MODELS = [
         ),
     ),
     AzureBaseModel(
-        base_model_name="gpt-4-turbo",
+        base_model_name="openai4-turbo",
         entity=AIModelEntity(
             model="fake-deployment-name",
             label=I18nObject(
@@ -1306,7 +1307,7 @@ LLM_BASE_MODELS = [
         ),
     ),
     AzureBaseModel(
-        base_model_name="o1-mini",
+        base_model_name="openaio1-mini",
         entity=AIModelEntity(
             model="fake-deployment-name",
             label=I18nObject(
@@ -1333,7 +1334,7 @@ LLM_BASE_MODELS = [
         ),
     ),
     AzureBaseModel(
-        base_model_name="o1",
+        base_model_name="openaio1",
         entity=AIModelEntity(
             model="fake-deployment-name",
             label=I18nObject(
@@ -1456,9 +1457,9 @@ LLM_BASE_MODELS = [
         ),
     ),
     AzureBaseModel(
-        base_model_name="gemini-1.5-pro", # 
+        base_model_name="nec-llm",
         entity=AIModelEntity(
-            model="fake-deployment-name", # 
+            model="fake-deployment-name",
             label=I18nObject(
                 en_US="fake-deployment-name-label",
             ),
@@ -1466,16 +1467,13 @@ LLM_BASE_MODELS = [
             features=[
                 ModelFeature.AGENT_THOUGHT,
                 ModelFeature.VISION,
-                ModelFeature.TOOL_CALL,
+                ModelFeature.MULTI_TOOL_CALL,
                 ModelFeature.STREAM_TOOL_CALL,
-                ModelFeature.DOCUMENT,
-                ModelFeature.VIDEO,
-                ModelFeature.AUDIO,
             ],
             fetch_from=FetchFrom.CUSTOMIZABLE_MODEL,
             model_properties={
                 ModelPropertyKey.MODE: LLMMode.CHAT.value,
-                ModelPropertyKey.CONTEXT_SIZE: 2097152, # 2M tokens
+                ModelPropertyKey.CONTEXT_SIZE: 128000,
             },
             parameter_rules=[
                 ParameterRule(
@@ -1487,119 +1485,72 @@ LLM_BASE_MODELS = [
                     **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TOP_P],
                 ),
                 ParameterRule(
-                    name="top_k",
-                    label=I18nObject(
-                        zh_Hans="",
-                        en_US="Top k",
-                    ),
-                    type="int",
-                    help=I18nObject(
-                        en_US="Only sample from the top K options for each subsequent token.",
-                    ),
-                    required=False,
+                    name="presence_penalty",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.PRESENCE_PENALTY],
                 ),
                 ParameterRule(
-                    name="max_output_tokens",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.MAX_TOKENS],
+                    name="frequency_penalty",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.FREQUENCY_PENALTY],
+                ),
+                _get_max_tokens(default=512, min_val=1, max_val=4096),
+                ParameterRule(
+                    name="seed",
+                    label=I18nObject(zh_Hans="种子", en_US="Seed"),
+                    type="int",
+                    help=AZURE_DEFAULT_PARAM_SEED_HELP,
+                    required=False,
+                    precision=2,
+                    min=0,
+                    max=1,
+                ),
+                ParameterRule(
+                    name="response_format",
+                    label=I18nObject(zh_Hans="回复格式", en_US="response_format"),
+                    type="string",
+                    help=I18nObject(
+                        zh_Hans="指定模型必须输出的格式",
+                        en_US="specifying the format that the model must output",
+                    ),
+                    required=False,
+                    options=["text", "json_object", "json_schema"],
                 ),
                 ParameterRule(
                     name="json_schema",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.JSON_SCHEMA],
+                    label=I18nObject(en_US="JSON Schema"),
+                    type="text",
+                    help=I18nObject(
+                        zh_Hans="设置返回的json schema，llm将按照它返回",
+                        en_US="Set a response json schema will ensure LLM to adhere it.",
+                    ),
+                    required=False,
                 ),
             ],
             pricing=PriceConfig(
-                input=0.00,
-                output=0.00,
+                input=2.50,
+                output=10.00,
                 unit=0.000001,
                 currency="USD",
             ),
         ),
     ),
     AzureBaseModel(
-        base_model_name="nec-llm",
-        entity=AIModelEntity(
-            model="nec-llm",
-            label=I18nObject(
-                en_US="nec-llm",
-                ja_JP="nec-llm",
-            ),
-            model_type=ModelType.LLM,
-            features=[
-                ModelFeature.AGENT_THOUGHT,
-                ModelFeature.TOOL_CALL,
-                ModelFeature.STREAM_TOOL_CALL,
-            ],
-            fetch_from=FetchFrom.CUSTOMIZABLE_MODEL,
-            model_properties={
-                ModelPropertyKey.MODE: LLMMode.CHAT.value,
-                ModelPropertyKey.CONTEXT_SIZE: 2097152,
-            },
-            parameter_rules=[
-                ParameterRule(
-                    name="temperature",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TEMPERATURE],
-                ),
-                ParameterRule(
-                    name="top_p",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TOP_P],
-                ),
-                ParameterRule(
-                    name="presence_penalty",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.PRESENCE_PENALTY],
-                ),
-                ParameterRule(
-                    name="frequency_penalty",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.FREQUENCY_PENALTY],
-                ),
-                ParameterRule(
-                    name="max_tokens",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.MAX_TOKENS],
-                ),
-                ParameterRule(
-                    name="response_format",
-                    label=I18nObject(
-                        en_US="response_format",
-                        ja_JP="response_format",
-                    ),
-                    type="string",
-                    help=I18nObject(
-                        en_US="response_format",
-                        ja_JP="response_format",
-                    ),
-                    required=False,
-                    options=["text", "json_object", "json_schema"],
-                ),
-                ParameterRule(
-                    name="json_schema",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.JSON_SCHEMA],
-                ),
-            ],
-            pricing=PriceConfig(
-                input=3.00,
-                output=10.00,
-                unit=0.000001,
-                currency="JPY",
-            ),
-        ),
-    ),
-    AzureBaseModel(
         base_model_name="cotomi-pro",
         entity=AIModelEntity(
-            model="cotomi-pro",
+            model="fake-deployment-name",
             label=I18nObject(
-                en_US="Cotomi Pro",
-                ja_JP="Cotomi Pro",
+                en_US="fake-deployment-name-label",
             ),
             model_type=ModelType.LLM,
             features=[
                 ModelFeature.AGENT_THOUGHT,
-                ModelFeature.TOOL_CALL,
+                ModelFeature.VISION,
+                ModelFeature.MULTI_TOOL_CALL,
                 ModelFeature.STREAM_TOOL_CALL,
             ],
             fetch_from=FetchFrom.CUSTOMIZABLE_MODEL,
             model_properties={
                 ModelPropertyKey.MODE: LLMMode.CHAT.value,
-                ModelPropertyKey.CONTEXT_SIZE: 2097152,
+                ModelPropertyKey.CONTEXT_SIZE: 128000,
             },
             parameter_rules=[
                 ParameterRule(
@@ -1618,94 +1569,42 @@ LLM_BASE_MODELS = [
                     name="frequency_penalty",
                     **PARAMETER_RULE_TEMPLATE[DefaultParameterName.FREQUENCY_PENALTY],
                 ),
+                _get_max_tokens(default=512, min_val=1, max_val=4096),
                 ParameterRule(
-                    name="max_tokens",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.MAX_TOKENS],
+                    name="seed",
+                    label=I18nObject(zh_Hans="种子", en_US="Seed"),
+                    type="int",
+                    help=AZURE_DEFAULT_PARAM_SEED_HELP,
+                    required=False,
+                    precision=2,
+                    min=0,
+                    max=1,
                 ),
                 ParameterRule(
                     name="response_format",
-                    label=I18nObject(
-                        en_US="response_format",
-                        ja_JP="response_format",
-                    ),
+                    label=I18nObject(zh_Hans="回复格式", en_US="response_format"),
                     type="string",
                     help=I18nObject(
-                        en_US="response_format",
-                        ja_JP="response_format",
+                        zh_Hans="指定模型必须输出的格式",
+                        en_US="specifying the format that the model must output",
                     ),
                     required=False,
                     options=["text", "json_object", "json_schema"],
                 ),
                 ParameterRule(
                     name="json_schema",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.JSON_SCHEMA],
-                ),
-            ],
-            pricing=PriceConfig(
-            input=7.00, 
-            output=20.00, 
-            unit=0.000001,
-            currency="JPY",
-            ),
-        ),
-    ),
-    AzureBaseModel(
-        base_model_name="gemini-2.0-flash",
-        entity=AIModelEntity(
-            model="gemini-2.0-flash",
-            label=I18nObject(
-                en_US="Gemini 2.0 Flash",
-                ja_JP="Gemini 2.0 Flash",
-            ),
-            model_type=ModelType.LLM,
-            features=[
-                ModelFeature.AGENT_THOUGHT,
-                ModelFeature.TOOL_CALL,
-                ModelFeature.STREAM_TOOL_CALL,
-                ModelFeature.VISION,
-                ModelFeature.DOCUMENT,
-                ModelFeature.VIDEO,
-                ModelFeature.AUDIO,
-            ],
-            fetch_from=FetchFrom.CUSTOMIZABLE_MODEL,
-            model_properties={
-                ModelPropertyKey.MODE: LLMMode.CHAT.value,
-                ModelPropertyKey.CONTEXT_SIZE: 2097152, # 2M tokens
-            },
-            parameter_rules=[
-                ParameterRule(
-                    name="temperature",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TEMPERATURE],
-                ),
-                ParameterRule(
-                    name="top_p",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TOP_P],
-                ),
-                ParameterRule(
-                    name="top_k",
-                    label=I18nObject(
-                        en_US="top_k",
-                        ja_JP="top_k",
-                    ),
-                    type="int",
+                    label=I18nObject(en_US="JSON Schema"),
+                    type="text",
                     help=I18nObject(
-                        en_US="top_k",
-                        ja_JP="top_k",
+                        zh_Hans="设置返回的json schema，llm将按照它返回",
+                        en_US="Set a response json schema will ensure LLM to adhere it.",
                     ),
                     required=False,
                 ),
-                ParameterRule(
-                    name="max_output_tokens",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.MAX_TOKENS],
-                ),
-                ParameterRule(
-                    name="json_schema",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.JSON_SCHEMA],
-                ),
             ],
             pricing=PriceConfig(
-                input=0.00,
-                output=0.00,
+                input=2.50,
+                output=10.00,
                 unit=0.000001,
                 currency="USD",
             ),
@@ -1714,23 +1613,21 @@ LLM_BASE_MODELS = [
     AzureBaseModel(
         base_model_name="claude-v3haiku",
         entity=AIModelEntity(
-            model="claude-v3haiku",
+            model="fake-deployment-name",
             label=I18nObject(
-                en_US="Claude V3Haiku",
-                ja_JP="Claude V3Haiku",
+                en_US="fake-deployment-name-label",
             ),
             model_type=ModelType.LLM,
             features=[
                 ModelFeature.AGENT_THOUGHT,
-                ModelFeature.TOOL_CALL,
-                ModelFeature.STREAM_TOOL_CALL,
                 ModelFeature.VISION,
-                ModelFeature.DOCUMENT,
+                ModelFeature.MULTI_TOOL_CALL,
+                ModelFeature.STREAM_TOOL_CALL,
             ],
             fetch_from=FetchFrom.CUSTOMIZABLE_MODEL,
             model_properties={
                 ModelPropertyKey.MODE: LLMMode.CHAT.value,
-                ModelPropertyKey.CONTEXT_SIZE: 4096,
+                ModelPropertyKey.CONTEXT_SIZE: 128000,
             },
             parameter_rules=[
                 ParameterRule(
@@ -1742,55 +1639,72 @@ LLM_BASE_MODELS = [
                     **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TOP_P],
                 ),
                 ParameterRule(
-                    name="top_k",
-                    label=I18nObject(
-                        en_US="top_k",
-                        ja_JP="top_k",
-                    ),
-                    type="int",
-                    help=I18nObject(
-                        en_US="top_k",
-                        ja_JP="top_k",
-                    ),
-                    required=False,
+                    name="presence_penalty",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.PRESENCE_PENALTY],
                 ),
                 ParameterRule(
-                    name="max_tokens",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.MAX_TOKENS],
+                    name="frequency_penalty",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.FREQUENCY_PENALTY],
+                ),
+                _get_max_tokens(default=512, min_val=1, max_val=4096),
+                ParameterRule(
+                    name="seed",
+                    label=I18nObject(zh_Hans="种子", en_US="Seed"),
+                    type="int",
+                    help=AZURE_DEFAULT_PARAM_SEED_HELP,
+                    required=False,
+                    precision=2,
+                    min=0,
+                    max=1,
                 ),
                 ParameterRule(
                     name="response_format",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.RESPONSE_FORMAT],
+                    label=I18nObject(zh_Hans="回复格式", en_US="response_format"),
+                    type="string",
+                    help=I18nObject(
+                        zh_Hans="指定模型必须输出的格式",
+                        en_US="specifying the format that the model must output",
+                    ),
+                    required=False,
+                    options=["text", "json_object", "json_schema"],
+                ),
+                ParameterRule(
+                    name="json_schema",
+                    label=I18nObject(en_US="JSON Schema"),
+                    type="text",
+                    help=I18nObject(
+                        zh_Hans="设置返回的json schema，llm将按照它返回",
+                        en_US="Set a response json schema will ensure LLM to adhere it.",
+                    ),
+                    required=False,
                 ),
             ],
             pricing=PriceConfig(
-            input=0.25,
-            output=1.25,
-            unit=0.000001,
-            currency="JPY",
+                input=2.50,
+                output=10.00,
+                unit=0.000001,
+                currency="USD",
             ),
         ),
     ),
     AzureBaseModel(
         base_model_name="claude-v3.5sonnet",
         entity=AIModelEntity(
-            model="claude-v3.5sonnet",
+            model="fake-deployment-name",
             label=I18nObject(
-                en_US="Claude V3.5Sonnet",
-                ja_JP="Claude V3.5Sonnet",
+                en_US="fake-deployment-name-label",
             ),
             model_type=ModelType.LLM,
             features=[
                 ModelFeature.AGENT_THOUGHT,
-                ModelFeature.TOOL_CALL,
-                ModelFeature.STREAM_TOOL_CALL,
                 ModelFeature.VISION,
-                ModelFeature.DOCUMENT,
+                ModelFeature.MULTI_TOOL_CALL,
+                ModelFeature.STREAM_TOOL_CALL,
             ],
             fetch_from=FetchFrom.CUSTOMIZABLE_MODEL,
             model_properties={
                 ModelPropertyKey.MODE: LLMMode.CHAT.value,
-                ModelPropertyKey.CONTEXT_SIZE: 8192,
+                ModelPropertyKey.CONTEXT_SIZE: 128000,
             },
             parameter_rules=[
                 ParameterRule(
@@ -1802,32 +1716,205 @@ LLM_BASE_MODELS = [
                     **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TOP_P],
                 ),
                 ParameterRule(
-                    name="top_k",
-                    label=I18nObject(
-                        en_US="top_k",
-                        ja_JP="top_k",
-                    ),
-                    type="int",
-                    help=I18nObject(
-                        en_US="top_k",
-                        ja_JP="top_k",
-                    ),
-                    required=False,
+                    name="presence_penalty",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.PRESENCE_PENALTY],
                 ),
                 ParameterRule(
-                    name="max_tokens",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.MAX_TOKENS],
+                    name="frequency_penalty",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.FREQUENCY_PENALTY],
+                ),
+                _get_max_tokens(default=512, min_val=1, max_val=4096),
+                ParameterRule(
+                    name="seed",
+                    label=I18nObject(zh_Hans="种子", en_US="Seed"),
+                    type="int",
+                    help=AZURE_DEFAULT_PARAM_SEED_HELP,
+                    required=False,
+                    precision=2,
+                    min=0,
+                    max=1,
                 ),
                 ParameterRule(
                     name="response_format",
-                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.RESPONSE_FORMAT],
+                    label=I18nObject(zh_Hans="回复格式", en_US="response_format"),
+                    type="string",
+                    help=I18nObject(
+                        zh_Hans="指定模型必须输出的格式",
+                        en_US="specifying the format that the model must output",
+                    ),
+                    required=False,
+                    options=["text", "json_object", "json_schema"],
+                ),
+                ParameterRule(
+                    name="json_schema",
+                    label=I18nObject(en_US="JSON Schema"),
+                    type="text",
+                    help=I18nObject(
+                        zh_Hans="设置返回的json schema，llm将按照它返回",
+                        en_US="Set a response json schema will ensure LLM to adhere it.",
+                    ),
+                    required=False,
                 ),
             ],
             pricing=PriceConfig(
-                input=3.00,
-                output=15.00,
+                input=2.50,
+                output=10.00,
                 unit=0.000001,
-                currency="JPY",
+                currency="USD",
+            ),
+        ),
+    ),
+    AzureBaseModel(
+        base_model_name="gemini-1.5-pro",
+        entity=AIModelEntity(
+            model="fake-deployment-name",
+            label=I18nObject(
+                en_US="fake-deployment-name-label",
+            ),
+            model_type=ModelType.LLM,
+            features=[
+                ModelFeature.AGENT_THOUGHT,
+                ModelFeature.VISION,
+                ModelFeature.MULTI_TOOL_CALL,
+                ModelFeature.STREAM_TOOL_CALL,
+            ],
+            fetch_from=FetchFrom.CUSTOMIZABLE_MODEL,
+            model_properties={
+                ModelPropertyKey.MODE: LLMMode.CHAT.value,
+                ModelPropertyKey.CONTEXT_SIZE: 128000,
+            },
+            parameter_rules=[
+                ParameterRule(
+                    name="temperature",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TEMPERATURE],
+                ),
+                ParameterRule(
+                    name="top_p",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TOP_P],
+                ),
+                ParameterRule(
+                    name="presence_penalty",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.PRESENCE_PENALTY],
+                ),
+                ParameterRule(
+                    name="frequency_penalty",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.FREQUENCY_PENALTY],
+                ),
+                _get_max_tokens(default=512, min_val=1, max_val=4096),
+                ParameterRule(
+                    name="seed",
+                    label=I18nObject(zh_Hans="种子", en_US="Seed"),
+                    type="int",
+                    help=AZURE_DEFAULT_PARAM_SEED_HELP,
+                    required=False,
+                    precision=2,
+                    min=0,
+                    max=1,
+                ),
+                ParameterRule(
+                    name="response_format",
+                    label=I18nObject(zh_Hans="回复格式", en_US="response_format"),
+                    type="string",
+                    help=I18nObject(
+                        zh_Hans="指定模型必须输出的格式",
+                        en_US="specifying the format that the model must output",
+                    ),
+                    required=False,
+                    options=["text", "json_object", "json_schema"],
+                ),
+                ParameterRule(
+                    name="json_schema",
+                    label=I18nObject(en_US="JSON Schema"),
+                    type="text",
+                    help=I18nObject(
+                        zh_Hans="设置返回的json schema，llm将按照它返回",
+                        en_US="Set a response json schema will ensure LLM to adhere it.",
+                    ),
+                    required=False,
+                ),
+            ],
+            pricing=PriceConfig(
+                input=2.50,
+                output=10.00,
+                unit=0.000001,
+                currency="USD",
+            ),
+        ),
+    ),
+    AzureBaseModel(
+        base_model_name="gemini-2.0-flash",
+        entity=AIModelEntity(
+            model="fake-deployment-name",
+            label=I18nObject(
+                en_US="fake-deployment-name-label",
+            ),
+            model_type=ModelType.LLM,
+            features=[
+                ModelFeature.AGENT_THOUGHT,
+                ModelFeature.VISION,
+                ModelFeature.MULTI_TOOL_CALL,
+                ModelFeature.STREAM_TOOL_CALL,
+            ],
+            fetch_from=FetchFrom.CUSTOMIZABLE_MODEL,
+            model_properties={
+                ModelPropertyKey.MODE: LLMMode.CHAT.value,
+                ModelPropertyKey.CONTEXT_SIZE: 128000,
+            },
+            parameter_rules=[
+                ParameterRule(
+                    name="temperature",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TEMPERATURE],
+                ),
+                ParameterRule(
+                    name="top_p",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.TOP_P],
+                ),
+                ParameterRule(
+                    name="presence_penalty",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.PRESENCE_PENALTY],
+                ),
+                ParameterRule(
+                    name="frequency_penalty",
+                    **PARAMETER_RULE_TEMPLATE[DefaultParameterName.FREQUENCY_PENALTY],
+                ),
+                _get_max_tokens(default=512, min_val=1, max_val=4096),
+                ParameterRule(
+                    name="seed",
+                    label=I18nObject(zh_Hans="种子", en_US="Seed"),
+                    type="int",
+                    help=AZURE_DEFAULT_PARAM_SEED_HELP,
+                    required=False,
+                    precision=2,
+                    min=0,
+                    max=1,
+                ),
+                ParameterRule(
+                    name="response_format",
+                    label=I18nObject(zh_Hans="回复格式", en_US="response_format"),
+                    type="string",
+                    help=I18nObject(
+                        zh_Hans="指定模型必须输出的格式",
+                        en_US="specifying the format that the model must output",
+                    ),
+                    required=False,
+                    options=["text", "json_object", "json_schema"],
+                ),
+                ParameterRule(
+                    name="json_schema",
+                    label=I18nObject(en_US="JSON Schema"),
+                    type="text",
+                    help=I18nObject(
+                        zh_Hans="设置返回的json schema，llm将按照它返回",
+                        en_US="Set a response json schema will ensure LLM to adhere it.",
+                    ),
+                    required=False,
+                ),
+            ],
+            pricing=PriceConfig(
+                input=2.50,
+                output=10.00,
+                unit=0.000001,
+                currency="USD",
             ),
         ),
     ),
