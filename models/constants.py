@@ -631,7 +631,7 @@ LLM_BASE_MODELS = [
         ),
     ),
     AzureBaseModel(
-        base_model_name="gpt-4o",
+        base_model_name="openai4o",
         entity=AIModelEntity(
             model="fake-deployment-name",
             label=I18nObject(
