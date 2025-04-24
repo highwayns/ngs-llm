@@ -1,4 +1,5 @@
 # Databricks notebook source
+# Databricks notebook source
 from pydantic import BaseModel
 
 from dify_plugin.entities.model.llm import LLMMode
@@ -56,7 +57,7 @@ class AzureBaseModel(BaseModel):
 
 LLM_BASE_MODELS = [
     AzureBaseModel(
-        base_model_name="openai4o",
+        base_model_name="gpt-4o",
         entity=AIModelEntity(
             model="fake-deployment-name",
             label=I18nObject(
@@ -133,7 +134,7 @@ LLM_BASE_MODELS = [
         ),
     ),
     AzureBaseModel(
-        base_model_name="openai4-turbo",
+        base_model_name="gpt-4-turbo",
         entity=AIModelEntity(
             model="fake-deployment-name",
             label=I18nObject(
@@ -200,7 +201,7 @@ LLM_BASE_MODELS = [
         ),
     ),
     AzureBaseModel(
-        base_model_name="openaio1-mini",
+        base_model_name="o1-mini",
         entity=AIModelEntity(
             model="fake-deployment-name",
             label=I18nObject(
@@ -227,7 +228,7 @@ LLM_BASE_MODELS = [
         ),
     ),
     AzureBaseModel(
-        base_model_name="openaio1",
+        base_model_name="o1",
         entity=AIModelEntity(
             model="fake-deployment-name",
             label=I18nObject(

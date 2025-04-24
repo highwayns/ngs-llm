@@ -122,7 +122,7 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
             )
         try:
             client = AzureOpenAI(**self._to_credential_kwargs(credentials))
-            if base_model_name.startswith(("openaio1", "o3")):
+            if base_model_name.startswith(("o1", "o3")):
                 client.chat.completions.create(
                     messages=[{"role": "user", "content": "ping"}],
                     model=model,
@@ -321,10 +321,10 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
             extra_model_kwargs["user"] = user
         prompt_messages = self._clear_illegal_prompt_messages(base_model_name, prompt_messages)
         block_as_stream = False
-        if base_model_name.startswith(("openaio1", "o3")):
+        if base_model_name.startswith(("o1", "o3")):
             # o1 and o1-* do not support streaming
             # https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/reasoning#api--feature-support
-            if base_model_name.startswith("openaio1"):
+            if base_model_name.startswith("o1"):
                 if stream:
                     block_as_stream = True
                     stream = False
@@ -399,7 +399,7 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         :param prompt_messages: prompt messages
         :return: cleaned prompt messages
         """
-        checklist = ["openai4-turbo", "gpt-4-turbo-2024-04-09"]
+        checklist = ["gpt-4-turbo", "gpt-4-turbo-2024-04-09"]
         if model in checklist:
             user_message_count = len(
                 [m for m in prompt_messages if isinstance(m, UserPromptMessage)]
@@ -418,7 +418,7 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
                                     for item in prompt_message.content
                                 ]
                             )
-        if model.startswith(("openaio1", "o3")):
+        if model.startswith(("o1", "o3")):
             system_message_count = len(
                 [m for m in prompt_messages if isinstance(m, SystemPromptMessage)]
             )
@@ -671,8 +671,8 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         Official documentation: https://github.com/openai/openai-cookbook/blob/
         main/examples/How_to_format_inputs_to_ChatGPT_models.ipynb"""
         model = credentials["base_model_name"]
-        if model.startswith(("openaio1", "o3", "gpt-4.5")):
-            model = "openai4o"
+        if model.startswith(("o1", "o3", "gpt-4.5")):
+            model = "gpt-4o"
         try:
             encoding = tiktoken.encoding_for_model(model)
         except KeyError:
@@ -684,12 +684,12 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
             tokens_per_name = -1
         elif (
             model.startswith("gpt-35-turbo")
-            or model.startswith("openai4")
-            or model.startswith("nec-llm")
-            or model.startswith("cotomi-pro")
+            or model.startswith("gpt-4")
+            or model.startswith("nec")
+            or model.startswith("cotomi")
             or model.startswith("claude")
             or model.startswith("gemini")
-            or model.startswith(("openaio1", "o3"))
+            or model.startswith(("o1", "o3"))
         ):
             tokens_per_message = 3
             tokens_per_name = 1

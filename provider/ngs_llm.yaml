@@ -103,57 +103,57 @@ model_credential_schema:
           show_on:
             - value: llm
               variable: __model_type
-          value: openaio1-mini
+          value: o1-mini
         - label:
             en_US: openaio1
           show_on:
             - value: llm
               variable: __model_type
-          value: openaio1
+          value: o1
         - label:
             en_US: openai4o
           show_on:
             - value: llm
               variable: __model_type
-          value: openai4o
+          value: gpt-4o
         - label:
             en_US: openai4-turbo
           show_on:
             - value: llm
               variable: __model_type
-          value: openai4-turbo
+          value: gpt-4-turbo
         - label:
-            en_US: Gemini 1.5 Pro
+            en_US: gemini-1.5-pro
           show_on:
             - value: llm
               variable: __model_type
           value: gemini-1.5-pro
         - label:
-            en_US: Nec llm
+            en_US: nec-llm
           show_on:
             - value: llm
               variable: __model_type
           value: nec-llm
         - label:
-            en_US: Cotomi pro
+            en_US: cotomi-pro
           show_on:
             - value: llm
               variable: __model_type
           value: cotomi-pro
         - label:
-            en_US: Claude v3Haiku
+            en_US: claude-v3haiku
           show_on:
             - value: llm
               variable: __model_type
           value: claude-v3haiku
         - label:
-            en_US: Claude v3.5Sonnet
+            en_US: claude-v3.5sonnet
           show_on:
             - value: llm
               variable: __model_type
           value: claude-v3.5sonnet
         - label:
-            en_US: Gemini 2.0 Flash
+            en_US: gemini-2.0-flash
           show_on:
             - value: llm
               variable: __model_type
