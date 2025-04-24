@@ -1,5 +1,4 @@
 # Databricks notebook source
-# Databricks notebook source
 from pydantic import BaseModel
 
 from dify_plugin.entities.model.llm import LLMMode

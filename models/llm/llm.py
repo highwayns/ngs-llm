@@ -1,4 +1,5 @@
 # Databricks notebook source
+# Databricks notebook source
 import copy
 import json
 import logging
@@ -56,6 +57,13 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         ai_model_entity = self._get_ai_model_entity(
             base_model_name=base_model_name, model=model
         )
+        if (
+            base_model_name.startswith("cotomi")
+            or base_model_name.startswith("nec")
+            or base_model_name.startswith("claude")
+            or base_model_name.startswith("gemini")
+        ):
+            base_model_name = "gpt-4o"
         if (
             ai_model_entity
             and ai_model_entity.entity.model_properties.get(ModelPropertyKey.MODE)
@@ -685,8 +693,8 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         elif (
             model.startswith("gpt-35-turbo")
             or model.startswith("gpt-4")
-            or model.startswith("nec")
             or model.startswith("cotomi")
+            or model.startswith("nec")
             or model.startswith("claude")
             or model.startswith("gemini")
             or model.startswith(("o1", "o3"))

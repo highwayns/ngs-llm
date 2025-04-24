@@ -5,7 +5,6 @@ extra:
   python:
     model_sources:
       - models/llm/llm.py
-      - models/text_embedding/text_embedding.py
     provider_source: provider/ngs_llm.py
 help:
   title:
@@ -158,24 +157,6 @@ model_credential_schema:
             - value: llm
               variable: __model_type
           value: gemini-2.0-flash
-        - label:
-            en_US: text-embedding-ada-002
-          show_on:
-            - value: text-embedding
-              variable: __model_type
-          value: text-embedding-ada-002
-        - label:
-            en_US: text-embedding-3-small
-          show_on:
-            - value: text-embedding
-              variable: __model_type
-          value: text-embedding-3-small
-        - label:
-            en_US: text-embedding-3-large
-          show_on:
-            - value: text-embedding
-              variable: __model_type
-          value: text-embedding-3-large
       placeholder:
         en_US: Enter your model version
         zh_Hans: 在此输入您的模型版本
@@ -193,10 +174,6 @@ models:
   llm:
     predefined:
       - models/llm/*.yaml
-  text_embedding:
-    predefined:
-      - models/text_embedding/*.yaml
 provider: ngs_llm
 supported_model_types:
   - llm
-  - text-embedding
