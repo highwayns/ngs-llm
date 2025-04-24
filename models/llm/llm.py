@@ -677,7 +677,7 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
             encoding = tiktoken.encoding_for_model(model)
         except KeyError:
             logger.warning("Warning: model not found. Using cl100k_base encoding.")
-            model = "cl100k_base"
+            model = "gpt-4o"
             encoding = tiktoken.get_encoding(model)
         if model.startswith("gpt-35-turbo-0301"):
             tokens_per_message = 4
