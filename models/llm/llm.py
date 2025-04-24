@@ -54,9 +54,6 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         user: Optional[str] = None,
     ) -> Union[LLMResult, Generator]:
         base_model_name = self._get_base_model_name(credentials)
-        ai_model_entity = self._get_ai_model_entity(
-            base_model_name=base_model_name, model=model
-        )
         if (
             base_model_name.startswith("cotomi")
             or base_model_name.startswith("nec")
@@ -64,6 +61,9 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
             or base_model_name.startswith("gemini")
         ):
             base_model_name = "gpt-4o"
+        ai_model_entity = self._get_ai_model_entity(
+            base_model_name=base_model_name, model=model
+        )
         if (
             ai_model_entity
             and ai_model_entity.entity.model_properties.get(ModelPropertyKey.MODE)
@@ -98,6 +98,13 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         tools: Optional[list[PromptMessageTool]] = None,
     ) -> int:
         base_model_name = self._get_base_model_name(credentials)
+        if (
+            base_model_name.startswith("cotomi")
+            or base_model_name.startswith("nec")
+            or base_model_name.startswith("claude")
+            or base_model_name.startswith("gemini")
+        ):
+            base_model_name = "gpt-4o"
         model_entity = self._get_ai_model_entity(
             base_model_name=base_model_name, model=model
         )
@@ -121,6 +128,13 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         if "base_model_name" not in credentials:
             raise CredentialsValidateFailedError("Base Model Name is required")
         base_model_name = self._get_base_model_name(credentials)
+        if (
+            base_model_name.startswith("cotomi")
+            or base_model_name.startswith("nec")
+            or base_model_name.startswith("claude")
+            or base_model_name.startswith("gemini")
+        ):
+            base_model_name = "gpt-4o"
         ai_model_entity = self._get_ai_model_entity(
             base_model_name=base_model_name, model=model
         )
@@ -164,6 +178,13 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         self, model: str, credentials: dict
     ) -> Optional[AIModelEntity]:
         base_model_name = self._get_base_model_name(credentials)
+        if (
+            base_model_name.startswith("cotomi")
+            or base_model_name.startswith("nec")
+            or base_model_name.startswith("claude")
+            or base_model_name.startswith("gemini")
+        ):
+            base_model_name = "gpt-4o"
         ai_model_entity = self._get_ai_model_entity(
             base_model_name=base_model_name, model=model
         )
@@ -295,6 +316,13 @@ class NgsLLMAILargeLanguageModel(_CommonAzureOpenAI, LargeLanguageModel):
         user: Optional[str] = None,
     ) -> Union[LLMResult, Generator]:
         base_model_name = self._get_base_model_name(credentials)
+        if (
+            base_model_name.startswith("cotomi")
+            or base_model_name.startswith("nec")
+            or base_model_name.startswith("claude")
+            or base_model_name.startswith("gemini")
+        ):
+            base_model_name = "gpt-4o"
         client = AzureOpenAI(**self._to_credential_kwargs(credentials))
         response_format = model_parameters.get("response_format")
         if response_format:
